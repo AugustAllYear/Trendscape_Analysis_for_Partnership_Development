@@ -1,0 +1,1 @@
+# Trendscape_Analysis_for_Partnership_Development
