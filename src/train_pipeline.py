@@ -162,19 +162,124 @@ def train_topic_model(texts, min_topic_size=10):
 def update_topic_model(topic_model, new_texts):
     """
     Update an excisting BERTopic model with new texts (incremental learning).
-    
-        
+    BERTopic supports partial fit via 'transform' and updating topics, but for
+    simplicity we often retrain weekly. This function is a placeholder.
+    """
+    # BERTopic dostn have a true onnline update, so we will jsut retrain
+    # In production this might use a library like Incremental BERTopic
+
+def find_hottest_topic(topic_model, df, lookback_days=30):
+    """
+    Determine which topic has grown fastest in the last 'lookback_days',
+    Returns topic ID.
+    """
+    # This requires timestmaped data. For simplicity we'll assume 'df' has a 'date' column
+    # if not we will need to join with original timestamps
 
 
+    df['date'] = pd.to_datetime(df['published_at'])
+    df = df.sort_values('date')
+
+    # get topic assignments for all documents
+    topics, _ = topic_model.transform(df['clean_text'].tolist())
+    df['topics'] = topics
+
+    # split into recent and baseline periods
+    cutoff = df['date'].max() - timedelta(days=lookback_days) #cannot subreact int from date tiem object so must subract a datetime object 
+    recent = df[df['date']] > 'cutoff']
+    baseline = df[df['date'] <= cutoff]
+
+    # count topic frequencies in each period
+    recent_counts = recent['topic'].value_counts()
+    baseline_counts = baseline['topic'].value_counts()
+
+    # caluculates growth rate (avoid division by zero)
+    growth = {}
+    for topic in recent_counts.index:
+        if topic == -1:
+            continue #outlier topic
+        recent_n = recent_counts.get(topic, 0)
+        baseline_n = baseline_counts.get(topic, 0)
+        if baseline_n > 0:
+            growth[topic] = (recent_n - baseline_n / baseline_n
+        else: 
+            growth[topic] = float('inf') if recent_n > 0 else 0
+
+    # Return topic with highest growth
+    if growth:
+        hottest = max(growth.items(), key =lambda x: x[1])
+        return hottest[0]
+    else:
+        return -1
+
+def score_companies(topic_model, df, hot_topic_topic_id):
+    """ 
+    For the hottest topic, extract company mentions and compute a partnership score.
+    Returns a DataFrame with companies, mention counts, sentiment, adn final score.
+    """
+
+    # filtre documents belonging to the hot topic
+    topics, _ = topic_model.transfrom(df['clean_text'].tolist())
+    df['topic'] = topics
+    hot_docs= df[df['topic'] == hot_topic__id]
+
+    # extract all orginization mentions from these docs
+    all_orgs = []
+    for entities in hot_docs['entities']:
+        all_orgs.extend(entities.get('ORG', []))
+
+    # count frequencies
+    org_counts = Counter(all_orgs)
+    if not org_counts:
+        return pd.DataFrame()
+
+    # for top 20 companies, compute additional scores
+    top_opgs = org_counts.most_common(20)
+    results = []
+    for org, count in top_orgs:
+        # get all doc mentioning this org in hot topic
+        org_docs = hot_ddocs['entities'].apply(lambda x: org in x.get('ORG',[]))]
+
+        # 1. frequenciy score (normalized by max)
+        freq_score - count / max(org_counts.values())
+
+        # 2 .sentiment score (average sentiment of mentioning docs)
+        #   using simple heuristic: count positive/negative words.
+        #   in production, use a proper sentiment model
+        pos_words = set(['partner', 'collaboration', 'launch', 'grow', 'expand', 'innovate'])
+        neg_words = set(['lawsuit', 'loss', 'decleine','layoff','fine'])
+        sentiment_sum = 0
+        for doc in org_docs['clean_text']:
+            words = set(doc.split())
+            pos = len(words & pos_words)
+            neg = len(words & neg_words)
+            sentiment_sum += (pos -neg) / (len(owords) + 1) 
+        sentiment_score = (sentiment_sum / len(org_docs) + 1 / 2 #normalize 0-1
 
 
+        # 3. strategic alignment (check if clients company is mentioned)
+        our_company = "propsub" # fake name for pucli facing repo
+        alignment = org_docs['clean_text'].str.contains(our_company.lower()).any()
+        alignment_score = 1.0 if alignment else 0.0
 
+        # weighted combination (tuned to clients needs)
+        total_score = (
+                    freq_score * 0.5 +
+                    sentiment_score * 0.3 +
+                    alignment_score * 0.2
+        )
 
+        results.append({
+            'compant': org,
+            'mention_count': count,
+            'freq_score': round(freq_score, 3),
+            'sentiment_score': round(sentiment_score, 3),
+            'alignment_score': alignment_score,
+            'partnership_score': round(total_score, 3)
+        })
 
-
-
-
-
+    return pd.DataFrame(results).sort_values('partnership_score', ascending = False)
+                           
 
 
 
