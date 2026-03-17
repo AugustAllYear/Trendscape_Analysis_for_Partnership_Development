@@ -132,7 +132,7 @@ def score_and_recommend(**context):
     model_path = ti.xcom_pull(key='model_path', task_ids='train_model')
     clean_path = ti.xcom_pull(key='clean_path', task_ids='preprocess')
 
-    # Load model and lastest data
+    # load model and lastest data
     topic_model = joblib.load(model_path)
     df_latest = pd.read_parquet(clean_path)
 
@@ -144,7 +144,7 @@ def score_and_recommend(**context):
     output_csv = f'/data/output/recommendations_{context['ds']}.csv"
     recommendations.to_csv(output_csv, index=False)
 
-    #  also saving to JSON for API consumption
+    # also saving to JSON for API consumption
     recommendations.to_json("/api/data/latest_recommendations.json", orient='records')
 
     return "Recommendations generated"

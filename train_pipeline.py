@@ -13,12 +13,12 @@ import nltk
 import spacy
 from bertopic import BERTopic
 from sentence_transformers import SentenceTransformer
-from collections import COunter
+from collections import Counter
+from transformers import pipeline
 import joblib
 import os
 
-
-#  confihire loggong
+#  configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ def fetch_news_api(api_key, days_back=1):
         'pageSize': 100,
         'apiKey': api_key
     }
-    logger.info(f"Fetuching news from {from_date}")
+    logger.info(f"Fetching news from {from_date}")
     response = requests.get(url, params=params)
     if response.status_code != 200:
         logger.error(f"NewsAPI error: {response.text}")
@@ -69,7 +69,7 @@ def fetch_news_api(api_key, days_back=1):
             'published_at': art.get('publishedAt'),
             'url':art.get('url'),
         })
-    df = pr.DataFrame(data)
+    df = pd.DataFrame(data)
     logger.info(f"Fetched {len(df)} news articles")
     return df
 
@@ -161,21 +161,24 @@ def train_topic_model(texts, min_topic_size=10):
 
 def update_topic_model(topic_model, new_texts):
     """
-    Update an excisting BERTopic model with new texts (incremental learning).
-    BERTopic supports partial fit via 'transform' and updating topics, but for
-    simplicity we often retrain weekly. This function is a placeholder.
+    Update the topic model with new data.
+    Since BERTopic does not support online learning, we retrain on a 
+    rolling window of the most recent N documents (e.g., last 90 days).
+    For production, consider storing the model weekly and using it 
+    for inference daily without updating.
     """
-    # BERTopic dostn have a true onnline update, so we will jsut retrain
-    # In production this might use a library like Incremental BERTopic
+    # For simplicity, we retrain from scratch on all accumulated data.
+    # In a real system, you might combine old and new data efficiently.
 
 def find_hottest_topic(topic_model, df, lookback_days=30):
     """
     Determine which topic has grown fastest in the last 'lookback_days',
     Returns topic ID.
     """
-    # This requires timestmaped data. For simplicity we'll assume 'df' has a 'date' column
-    # if not we will need to join with original timestamps
-
+    # requires timestmaped data
+    # if not join with original timestamps
+    if 'published_at' not in df.columns:
+        raise ValueError("DataFrame must contain 'published_at' column for trend detection")
 
     df['date'] = pd.to_datetime(df['published_at'])
     df = df.sort_values('date')
@@ -185,7 +188,7 @@ def find_hottest_topic(topic_model, df, lookback_days=30):
     df['topics'] = topics
 
     # split into recent and baseline periods
-    cutoff = df['date'].max() - timedelta(days=lookback_days) #cannot subreact int from date tiem object so must subract a datetime object 
+    cutoff = df['date'].max() - timedelta(days=lookback_days) #cannot subtract int from date time object so must subract a datetime object 
     recent = df[df['date']] > 'cutoff']
     baseline = df[df['date'] <= cutoff]
 
@@ -243,9 +246,9 @@ def score_companies(topic_model, df, hot_topic_topic_id):
         # 1. frequenciy score (normalized by max)
         freq_score - count / max(org_counts.values())
 
-        # 2 .sentiment score (average sentiment of mentioning docs)
-        #   using simple heuristic: count positive/negative words.
-        #   in production, use a proper sentiment model
+        # 2. sentiment score (average sentiment of mentioning docs)
+        #    using simple heuristic: count positive/negative words.
+        #    in production, use a proper sentiment model
         pos_words = set(['partner', 'collaboration', 'launch', 'grow', 'expand', 'innovate'])
         neg_words = set(['lawsuit', 'loss', 'decleine','layoff','fine'])
         sentiment_sum = 0

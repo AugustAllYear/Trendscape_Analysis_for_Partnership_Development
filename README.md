@@ -26,6 +26,28 @@ The pipeline:
 - Storage: PostgreSQL for metadata, Elasticsearch for full-text search
 - CI/CD: GitHub Actions + Docker + MLflow
 
+### File Structure
+
+market_intelligence/
+├── dags/
+│   └── market_intelligence_dag.py
+├── src/
+│   ├── __init__.py
+│   ├── data_fetchers.py
+│   ├── preprocessing.py
+│   ├── topic_model.py
+│   ├── scoring.py
+├── api/
+│   └── main.py
+├── tests/
+│   └── test_data_quality.py
+├── notebooks/
+│   └── exploratory_analysis.ipynb
+├── .github/workflows/
+│   └── market_intelligence.yml
+├── requirements.txt
+├── Dockerfile
+└── README.md
 
 # ADD TO README IN EXPLINATIONS!
 3. Model, Storage, and CI/CD Decisions
