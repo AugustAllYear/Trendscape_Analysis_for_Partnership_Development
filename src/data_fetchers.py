@@ -3,7 +3,7 @@ functions to fetch data from external APIs
 """
 
 import pandas as pd
-impor requests
+import requests
 import logging
 from datetime import datetime, timedelta
 

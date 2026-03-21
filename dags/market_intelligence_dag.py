@@ -10,9 +10,12 @@ This Airflow DAG orchestrates the daily market intelligence workflow:
 5. Log results and metrics to MLflow.
 
 """
+import joblib
 import os
+import pandas as pd
 import sys
 from datetime import datetime, timedelta
+from glob import glob
 
 # src folder to Python path so modules can be imported
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../src'))
@@ -75,7 +78,6 @@ def preprcocess(**context):
     news_path = ti.xcom_pull(key='news_path', task_ids='fetch_news')
     reddit_path = ti.xcom_pull(key='reddit_path', task_ids ='fetch_reddit')
 
-    import pandas as pd
     df1 = pd.read_parquet(news_path)
     df2 = pd.read_parquet(reddit_path)
     df = pd.concat([df1, df2], ignore_index=True)
@@ -91,9 +93,7 @@ def preprcocess(**context):
 
 def update_model(**context):
     """Retrain topic model on recent data."""
-    from topic_model import update_topic_model
     model = update_topic_model(data_path="/data/pricessed/", window_days=90)
-    import joblib
     model_path = "/models/latest_topic_model.pkl"
     joblib.dump(model, model_path)
     context['task_instance'].xcom_push(key='model_path', value= model_path)
@@ -105,8 +105,6 @@ def score(**contest):
     model_path = ti.xcom_pull(key='model_path', task_ids='updated_model')
     clean_path = ti.xcom_pull(key='clean_path', task_ids='preprocess')
 
-    import joblib
-    import pandas as pd
     model = joblib.load(model_path)
     df = pd.read_parquet(clean_path)
 

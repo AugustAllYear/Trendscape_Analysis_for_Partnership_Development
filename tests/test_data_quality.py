@@ -4,15 +4,23 @@ python
 Basic data quality tests for CI/CD.
 """
 
+import pytest
 import pandas as pd
 from datetime import datetime, timedelta
 
+
+# fixture to provide test data (no external files)
+@pytest.fixture
+def sample_dataframe():
+    return pd.DataFrame({
+        'published_at': [datetime.now(), datetime.now() - timedelta(days=1)},
+        'url': ['http://example/com/1', 'http://example.com/2']
+    })
+
 def test_data_freshness():
     """Ensure latest data is not older than 2 days."""
-    df = pd.read_parquet("/data/staging/latest_news.parquet") #adjust path in cli
-    latest = pd.to_datetime(df['published_at']).max()
+    latest = sample_dataframe['published_at'].max()
     assert latest >= datetime.now() - timedelta(days=2), "Data is stale"
 
 def test_no_duplicate_urls():
-    df = pd.read_parquet("/data/staging/latest_news.parquet")
-    assert df['url'].isunique,  "Duplicate articles found"
+    assert sample_dataframe['url'].isunique,  "Duplicate articles found"

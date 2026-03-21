@@ -62,6 +62,20 @@ Trendscape_Analysis_for_Partnership_Development/
 └── README.md
 
 ```
+
+## Architectural Decisions
+
+The following choices were made to balance performance, maintainability, and cost.
+
+| Component | Choice | Rationale |
+|-----------|--------|-----------|
+| **Topic Modeling** | BERTopic | Transformer‑based; captures contextual meaning and dynamic topics. Outperforms LDA on nuanced, real‑world text. |
+| **Entity Extraction** | spaCy | Fast, pre‑trained for organization names; integrates easily with Python. |
+| **Storage** | PostgreSQL (metadata) + cloud blob (raw) | PostgreSQL for queryable metadata; cloud storage (S3/GCS) for cost‑effective retention of raw data. |
+| **Orchestration** | Apache Airflow | Industry standard for scheduling and monitoring data pipelines. |
+| **CI/CD** | GitHub Actions | Free tier, integrates directly with code repository; runs tests and model training on schedule. |
+| **Processing Scale** | pandas | Data volume (~hundreds of documents/day) fits comfortably in pandas; Spark would add unnecessary overhead. |
+
 ## Getting Started 
 
 ### Prerequisites
@@ -198,6 +212,9 @@ the GitHub Actions workflow (.github/workflows/market_intelligence.yml) runs:
 - Logs metrics to MLflow.
 - (Optional) Deploys the API is test pass.
 
+### View Results (FastAPI endpoint)
+
+
 ### Cost Estimation (Monthly)
 Resource	Estimated Cost
 Compute (t3.medium)	$30
@@ -216,12 +233,25 @@ See LICENSE
 ## Contact
 For questions, contact the augustvollbrecht@proton.me.
 
-# Possible add on!
-3. Model, Storage, and CI/CD Decisions
-Component	Choice	Rationale
-Topic Modeling	BERTopic	State‑of‑the‑art, uses transformer embeddings, handles dynamic topics over time. Better than LDA for nuanced trends. LDA is a probabilistic model designed for topic discovery based on word frequency, whereas BERT is a deep learning model designed for contextual understanding and semantic representation
-Entity Extraction	spaCy	Fast, accurate, pre‑trained for organization names.
-Storage	PostgreSQL (metadata) + cloud blob (raw data)	PostgreSQL for querying, cloud storage (AWS S3 / GCS) for cost‑effective raw data retention.
-CI/CD	GitHub Actions (free)	Integrates with code repository, can run tests and trigger model retraining on a schedule.
-Why not Spark for everything?
-While Spark is great for large‑scale batch processing, the data volume here (~a few hundred articles per day) is well within pandas’ capabilities. Spark would add unnecessary complexity.
+## Future Development & Next Steps
+
+- **Add real-time streaming** - Intergrate with a message queue (e.g., Kafka) to process incoming articles as they are published.
+- **Improve sentiment analysis** - Fine-tune a transformer model on company-cpecific datya for more accurate sentiment scoring.
+- **Deploy to cloud** - COntainerize the pipeline and deploy on AWS/GCP with managed Airflow (e.g., MWAA, Cloud Composer).
+- **Add a feedback loop** - Allow business users to mark recommendations as successful; use that to retrain the scoring model.
+- **Build a dashboard**- Create an interactive dashboard (Stremlit or Tableau) that displays treanding topics and partner scores in real time.
+- **Monitor model drift** - Set up automated alerts when topic distributions change significantly. 
+
+## Other Use Case Examples
+
+The core pipeline (daily data ingestion -> entity extraction -> scoring) is highly adaptable. Other use cases for a similair modeling approach:
+
+- Competitive Intelligence - Monitor news about copetitors, track their product launches, funding, partnerships scores, outpput competitor threat levels.
+- Brand Monitoring - Track mentions of your own brand across news and social media, measue sentiment, and identicy influencers who mention you.
+- Crisis Detection - Look for sudden spikes in negative sentiment or specific keywords (e.g., "recall", "lawsuits") to alret PR teams.
+- Trend-Driven Content Creation - Use trending topics to suggest blog post ideas, video topics, or ad copy for marketing teams.
+- Investment Research - For a VC firm track emergin startups in specific sectors and score them based on media buzz and funding news.
+
+With slight adjusments to scoring logic and the output format (e.g., a dashboard, alerts, or a weekly report.)
+
+
