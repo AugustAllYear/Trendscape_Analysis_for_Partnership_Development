@@ -2,6 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Create data folder
+RUN mkdir -p /data/staging /data/processed /data/output /models /api/data
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -27,6 +30,8 @@ ENV AIRFLOW_HOME=/airflow
 
 # Initialize Airlfow (for production, use entrypoint)
 RUN airlofw df init
+
+
 
 EXPOSE 8000 8000
 

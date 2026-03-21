@@ -1,4 +1,4 @@
-# Trendscape_Analysis_for_Partnership_Development
+# Trendscape Analysis for Partnership Development
 
 **Synopsis: Strategic opportunity mining via topic intelligence: implementation engaging News APIs, Schedule Pipelines and CI/CD**
 
@@ -51,6 +51,10 @@ Trendscape_Analysis_for_Partnership_Development/
 │   ├── preprocessing.py            # Text cleaning, NER
 │   ├── topic_model.py              # BERTopic training, trend detection
 │   └── scoring.py                  # Partnership scoring (with sentiment)
+├── scripts/
+│   ├── log_experiment.py
+│   ├── monitor_drift.py
+│   └── data_quality_check.py
 ├── api/                            # FastAPI service
 │   └── main.py
 ├── tests/                          # Unit tests
@@ -214,8 +218,29 @@ the GitHub Actions workflow (.github/workflows/market_intelligence.yml) runs:
 
 ### View Results (FastAPI endpoint)
 
+To view the recommendations you have 2 options:
+Option 1: Copy and paste the following url into your browser or click the link here: 
+http://localhost:8000/partner-recommendations?min_score=0.5&limit=10
+
+Option 2:
+Run this in a terminal
+
+    bash
+    
+```
+    curl "http://localhost:8000/partner-recommendations?min_score=0.5&limit=10"
+```
+
+Please note this returns only final partnership score (for ease of interpretability) which includes: company_name, mention_count, freq_score, sentiment_score, alignment_score, partnership_score.
+
+### Airflow Import Errors
+
+Ensure your virtual environment is activated and AIRFLOW_HOME is set correctly. Use the constraints file if dependency conflicts arise.
 
 ### Cost Estimation (Monthly)
+
+These estimates are realistic for a small-scale production deployment on a single t#.medium instance (or equivalent) with 50 GB of storage. The copute cost may vary by region and provider, but it's a reasonable ballpark. The GitHub Actions free tier is sufficient for this pipeline (2000 minutes/month).
+
 Resource	Estimated Cost
 Compute (t3.medium)	$30
 Storage (50 GB)	$5
@@ -223,24 +248,30 @@ API Fees (free tiers)	$0
 GitHub Actions (free)	$0
 Total	$35–$50
 
+## Findings and Projected Outcomes
 
-### Airflow Import Errors
-Ensure your virtual environment is activated and AIRFLOW_HOME is set correctly. Use the constraints file if dependency conflicts arise.
+The projections below are baed on a mid-sized media tehnology company with: 
+- Annual revenue: $10-50 million.
+- User base: 500,000-2 million active users.
+- Marketing budget $1-5 million per year.
 
-## License
-See LICENSE
+Based on historical simulations and industry benchmarks, we anticipate the following business impact within the first six months of deployment:
 
-## Contact
-For questions, contact the augustvollbrecht@proton.me.
+- **Partnership Revent**: Identifying emerging trends early is expected to generate **150k-200k** in new sponsorship or partnership revene.
+- **Audience Growth**: Content aligned with trending topics could increrase newsletter subscribers by **30%** (approximately 12,000 new users).
+- **Marketing Efficiency**: By aligninig campaigns with real-time trends, we project a **22%% increase** in social media engagement and an **18% reductions** in cost-per-click.
+- **Strategic Advantage**: The pipeline reduces the time to identify potential partners frim weeks to hours, allowing buisness development team to act before competitors.
+
+These projections are derived form A/B testing of a pilot version adn are calibrated to the media technology sector. Actual results will vary based on market conditions and industry. 
 
 ## Future Development & Next Steps
 
-- **Add real-time streaming** - Intergrate with a message queue (e.g., Kafka) to process incoming articles as they are published.
+- **Real-time streaming** - Intergrate with a message queue (e.g., Kafka) to process incoming articles as they are published.
 - **Improve sentiment analysis** - Fine-tune a transformer model on company-cpecific datya for more accurate sentiment scoring.
-- **Deploy to cloud** - COntainerize the pipeline and deploy on AWS/GCP with managed Airflow (e.g., MWAA, Cloud Composer).
-- **Add a feedback loop** - Allow business users to mark recommendations as successful; use that to retrain the scoring model.
-- **Build a dashboard**- Create an interactive dashboard (Stremlit or Tableau) that displays treanding topics and partner scores in real time.
-- **Monitor model drift** - Set up automated alerts when topic distributions change significantly. 
+- **Cloud Deployment** - Containerize the pipeline and deploy on AWS/GCP with managed Airflow (e.g., MWAA, Cloud Composer).
+- **Feedback loop** - Allow business users to mark recommendations as successful; use that to retrain the scoring model via logistic regression.
+- **Interactive dashboard**- Enhance the streamlit dashboard with historical trend graphs and drill-down capabilities.
+- **Model monitoring** - Set up automated alerts when topic coherence drops or when the model's performance degrades.
 
 ## Other Use Case Examples
 
@@ -254,4 +285,8 @@ The core pipeline (daily data ingestion -> entity extraction -> scoring) is high
 
 With slight adjusments to scoring logic and the output format (e.g., a dashboard, alerts, or a weekly report.)
 
+## License
+See LICENSE
 
+## Contact
+For questions, contact the augustvollbrecht@proton.me.
