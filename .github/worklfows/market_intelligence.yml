@@ -33,3 +33,6 @@ jobs:
         run: |
           mlflow experiments create -n market_intelligence || true
           python src/log_experiment.py   # (you would need to implement this)
+
+- name: Log metrics to MLflow
+  run: python scripts/log_experiment.py

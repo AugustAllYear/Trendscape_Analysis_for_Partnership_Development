@@ -16,6 +16,9 @@ import pandas as pd
 import sys
 from datetime import datetime, timedelta
 from glob import glob
+sys.pth.insert(0, os.path.join(os.path.dirname(__file__), '../src'))
+
+from config import STAGING_PATH, PROCESSED_PATH, MODELS_DIR, OUTPUT_DIR, API_DATA_DIR
 
 # src folder to Python path so modules can be imported
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../src'))
@@ -49,6 +52,16 @@ dag = DAG(
     catchup=False,
     tags=['market_research', 'nlp'],
 )
+
+METRICS_FILE = os.path.join(API_DATA_DIR, 'metrics.json')
+
+@app.get("/model-metrics")
+def get_model_metrics():
+    if not os.path.exists(METRICS_FILE):
+        raise HTTPException(status_code=503, detail="Metrics not yet available")
+    with open(METRICS_FILE, 'r') as f:
+        metrics = json.load(f)
+    return metrics
 
 def fetch_news(**context):
     """Fetch news from NewsAPI."""
