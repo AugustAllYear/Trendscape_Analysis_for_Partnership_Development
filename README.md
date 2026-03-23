@@ -38,6 +38,7 @@ Factors that shaped the approach:
 | Database           | PostgreSQL (metadata), Parquet files|
 | CI/CD              | GitHub Actions, Docker              |
 
+**For detailed architecture,, evaluation metrics, and rationale, see the [Design Document](design.md).** 
 
 ### File Structure
 
@@ -67,18 +68,6 @@ Trendscape_Analysis_for_Partnership_Development/
 
 ```
 
-## Architectural Decisions
-
-The following choices were made to balance performance, maintainability, and cost.
-
-| Component | Choice | Rationale |
-|-----------|--------|-----------|
-| **Topic Modeling** | BERTopic | Transformer‑based; captures contextual meaning and dynamic topics. Outperforms LDA on nuanced, real‑world text. |
-| **Entity Extraction** | spaCy | Fast, pre‑trained for organization names; integrates easily with Python. |
-| **Storage** | PostgreSQL (metadata) + cloud blob (raw) | PostgreSQL for queryable metadata; cloud storage (S3/GCS) for cost‑effective retention of raw data. |
-| **Orchestration** | Apache Airflow | Industry standard for scheduling and monitoring data pipelines. |
-| **CI/CD** | GitHub Actions | Free tier, integrates directly with code repository; runs tests and model training on schedule. |
-| **Processing Scale** | pandas | Data volume (~hundreds of documents/day) fits comfortably in pandas; Spark would add unnecessary overhead. |
 
 ## Getting Started 
 
@@ -161,6 +150,16 @@ The following choices were made to balance performance, maintainability, and cos
    
 ### Running Locally 
 
+Note: 
+The pipeline expects data and model directories. By default, it uses `./data/staging`, `./data/processed`, `./models`, etc. You can create them with:
+
+    bash
+
+```
+mkdir -p data/staging data/processed data/output models api/data
+```
+If you want to use different locations, set the environment variables DATA_PATH, MODEL_PATH, OUTPUT_PATH before running Airflow or the API.
+
 1. Start an Airflow scheduler and webserver (inseperate terminals):
 
    bash
@@ -216,6 +215,11 @@ the GitHub Actions workflow (.github/workflows/market_intelligence.yml) runs:
 - Logs metrics to MLflow.
 - (Optional) Deploys the API is test pass.
 
+### Testing 
+
+- **CI (GitHub Actions)**: The workflow runs 'pytest tests/test_data_quality_ci.py' - these tests use synthetic data and do not require real files.
+- **Local testing**: To test with actual data, create the necessary data files. (see 'Running Locally') and run 'pytest tests/test_data_quality_local.py'. these tests expect the data to be present at the paths defined in your environment. 
+
 ### View Results (FastAPI endpoint)
 
 To view the recommendations you have 2 options:
@@ -236,6 +240,18 @@ Please note this returns only final partnership score (for ease of interpretabil
 ### Airflow Import Errors
 
 Ensure your virtual environment is activated and AIRFLOW_HOME is set correctly. Use the constraints file if dependency conflicts arise.
+
+#### Data Folders Not Found
+
+If you see errors about missing directories, create them manually:
+
+    bash
+```
+    mkdir -p data/stagging data/processed data/output models api/data
+
+```
+
+Or set the environment cariables DATA_Path, MODEL_PATH to point to existing locations.
 
 ### Cost Estimation (Monthly)
 
