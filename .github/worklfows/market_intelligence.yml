@@ -29,10 +29,9 @@ jobs:
         run: pytest tests/ -v
       - name: Train model (simulated)
         run: python -c "from src.topic_model import update_topic_model; update_topic_model(data_path='./data/processed/', window_days=90)"
-      - name: Log to MLflow
-        run: |
-          mlflow experiments create -n market_intelligence || true
-          python src/log_experiment.py   # (you would need to implement this)
-
-- name: Log metrics to MLflow
-  run: python scripts/log_experiment.py
+      - name: Log metrics to MLflow
+        run: python scripts/log_experiment.py
+      - name: Monitor model drift
+        run: python scripts/monitor_drift.py
+      - name: Data quality check
+        run: python scripts/data_quality_check.py

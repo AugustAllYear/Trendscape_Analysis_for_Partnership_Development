@@ -10,10 +10,12 @@ import pandas as pd
 import numpy as np
 import os
 import glob
+import json
 import logging
 from bertopic import BERTopic
 from gensim.corpora import Dictionary
 from gensim.models.coherencemodel import CoherenceModel
+from datetime import datetime
 from sklearn.feature_extraction.text import CountVectorizer
 
 loggin.basicConfig(level=logging.INFO)
@@ -33,7 +35,7 @@ def compute_coherence(topic_model, texts):
     # prepare for gensim coherence
     tokenized_texts = [text.split() for text in texts]
 
-    dictionary = dictionart(tokenizeD_textxs)
+    dictionary = dictionary(tokenized_texts)
     # filter extremes to keep vocbulary manageable
     dictionary.filter_extremes(no_below=2, no_above=0.9)
 

@@ -81,44 +81,37 @@ Trendscape_Analysis_for_Partnership_Development/
 ### Installation
 
 1. Clone the repository:
-   bash
-
-```
+  
+```bash
    git clone https://github.com/AugustAllYear/Trendscape_Analysis_for_Partnership_Development.git
    cd Trendscape_Analysis_for_Partnership_Development.git
 ```
    
-3. Create and activate a virtual environment:
+2. Create and activate a virtual environment:
 
-   bash
-   
-```
+```bash
    python3.11 -m venv vevn --prompt trendscape
    source venv/bin/activate  #Linux/macOS
    # .\venv\Scripts\activate  # Windows
 ```
    
-5. Install dependencies:
+3. Install dependencies:
 
-```
-    pip install --upgrade pip
-    pip install -r requirements.txt
+```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
 ```
     
-6. Download requiremed NLP models (this will be doen automatically on the first run, but you can pre-downlaod):
-
-   bash
-   
-```
+4. Download requiremed NLP models (this will be doen automatically on the first run, but you can pre-downlaod):
+     
+```bash
    python -m spacy download en_core_web_sm
    python -m nltk.downloader stopwords punkt
 ```
    
-7. Set up environment variables (create a .env file or export):
+5. Set up environment variables (create a .env file or export):
 
-   bash
-
-```
+```bash
    export AIRFLOW_HOME=$(pwd)/airflow
    export NEWSAPI_KEY=""
    export REDDIT_CLIENT_ID=""
@@ -132,12 +125,9 @@ Trendscape_Analysis_for_Partnership_Development/
   2. click "create app" and choose "script".
   3. fill in name, description, and redirect URI (e.g., http://localhost:8000).
   4. After creation, note the client_id (under the app name) and client_secret.
+  5. Initialize Airflow:
 
-6. Initialize Airflow:
-
-   bash
-
-```
+```bash
    airflow db init
    airflow users create \
    --username create \
@@ -147,24 +137,41 @@ Trendscape_Analysis_for_Partnership_Development/
    --email admin@example.com \
    --password admin
 ```
-   
+
+### Configuration
+
+The pipeline uses environment variables for paths. You can set them as needed:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATA_PATH` | `./data` | Base directory for raw and processed data |
+| `MODEL_PATH` | `./models` | Directory for saved models |
+| `OUTPUT_PATH` | `./data/output` | Directory for recommendation CSV files |
+| `API_DATA_PATH` | `./api/data` | Directory for API data (metrics, recommendations JSON) |
+| `API_URL` | `http://localhost:8000` | URL of the FastAPI service (used by dashboard) |
+
+For local development, simply create the default directories:
+
+```bash
+mkdir -p data/staging data/processed data/output models api/data
+```
+
+```bash
+mkdir -p api/data
+```
+
 ### Running Locally 
 
 Note: 
 The pipeline expects data and model directories. By default, it uses `./data/staging`, `./data/processed`, `./models`, etc. You can create them with:
-
-    bash
-
-```
+```bash
 mkdir -p data/staging data/processed data/output models api/data
 ```
 If you want to use different locations, set the environment variables DATA_PATH, MODEL_PATH, OUTPUT_PATH before running Airflow or the API.
 
 1. Start an Airflow scheduler and webserver (inseperate terminals):
 
-   bash
-
-```
+```bash
    airflow schedules
    #in another terminal
    airflow webserver --port 8080
@@ -177,9 +184,7 @@ If you want to use different locations, set the environment variables DATA_PATH,
 
 4. Start the FASTAPI service:
 
-    bash
-
-```
+```bash
     uvicorn api.main:app --reload --port 8000
 ```
     
@@ -188,17 +193,14 @@ API documentation available at http://localhost:8000/docs
 ### Running with Docker
 Build the image:
 
-    bash
-
-```
+```bash
     docker build -t trendscape .
     
 ```
 
 Run the container:
 
-    bash
-```
+```bash
     docker run -p 8000:8000 -p 8080:8080 \
     -e NEWSAPI_KEY=your_key\
     -e REDDIT CLIENT ID=your id \
@@ -228,10 +230,8 @@ http://localhost:8000/partner-recommendations?min_score=0.5&limit=10
 
 Option 2:
 Run this in a terminal
-
-    bash
     
-```
+```bash
     curl "http://localhost:8000/partner-recommendations?min_score=0.5&limit=10"
 ```
 
@@ -245,8 +245,7 @@ Ensure your virtual environment is activated and AIRFLOW_HOME is set correctly. 
 
 If you see errors about missing directories, create them manually:
 
-    bash
-```
+```bash
     mkdir -p data/stagging data/processed data/output models api/data
 
 ```
@@ -268,7 +267,10 @@ Total	$35–$50
 
 The projections below are baed on a mid-sized media tehnology company with: 
 - Annual revenue: $10-50 million.
+  
 - User base: 500,000-2 million active users.
+
+  
 - Marketing budget $1-5 million per year.
 
 Based on historical simulations and industry benchmarks, we anticipate the following business impact within the first six months of deployment:
