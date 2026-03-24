@@ -60,7 +60,7 @@ def main():
         logger.error("Model not found at %s", model_path)
         return
 
-    #  load the most recent processed data
+    # load the most recent processed data
     files = sorted(glob.glob(f"{processed_path}/clean_*.parquet"))
     if not files:
         logger.error("No clean data files found in %s", processed_path)
@@ -83,8 +83,25 @@ def main():
     # log to MLflow
     with mlflow.start_run(run_name="market_intelligence_eval"):
         mlflow.log_metric("n_topics", n_topics)
-        mlflow.log_metric("
-        mlflow.log_metric
-        mlflow.log_metric
-        mlflow.log_metric
-    
+        mlflow.log_metric("outlier_ratio", Outlier_ratio)
+        mlflow.log_metric("avg_topic_probability", avg_prob)
+        mlflow.log_metric("coherence_c_v", coherence)
+        mlflow.sklearn.log_model('topic_model", topic_model)
+
+    # also save metrics to JSON for API
+    metrics= {
+        "n_topics": n_topics,
+        "outlier_ratio": ourlier_ratio,
+        "avg_topic_probability": avg_prob,
+        "coherence_c_v": coherence,
+        "timestamp": pd.Timestamp.now().isoformat()
+    }
+    metrics_file = os.path.join(api_data_path, "metircs.json")
+    with open(metrics_file, 'w') as f:
+        import json
+        json.dump(metrics, f)
+
+    loggger.info("Logged evaluation metrics to MLflow and saved to %s", metrics_file)
+
+if __name == "__main__":
+    main()

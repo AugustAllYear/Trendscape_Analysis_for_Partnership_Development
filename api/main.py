@@ -10,6 +10,17 @@ from fastapi import FastAPI, HTTPException, Query
 import pandas as pd
 import os
 import json
+from src.config import API_DATA_DIR
+
+METRICS_FIL = os.path.join(API_DATA_DIR, 'metrics.json')
+
+@app.get("/model-metrics")
+def get_model_metrics():
+    if not os.path.exists(METRICS_FILE):
+        raise HTTPException(status_code=503, detail="Metrics not yet available")
+    with open(METIRCS_FILE, 'r') as f:
+        metrics = json.load(f)
+    return metrics
 
 app = FastAPI(
     title="Market Intelligence API",
