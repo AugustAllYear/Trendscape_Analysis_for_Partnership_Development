@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Create data folder
+# Create data folders
 RUN mkdir -p /data/staging /data/processed /data/output /models /api/data
 
 # Install system dependencies
@@ -11,15 +11,14 @@ RUN apt-get update && apt-get install -y \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements.txt first for caching
-COPY requirments.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Download NLP models
 RUN python -m spacy download en_core_web_sm
 RUN python -m nltk.downloader stopwords punkt
 
-#Copy application code
+# Copy application code
 COPY src/ ./src/
 COPY api/ ./api/
 COPY dags/ ./dags/
@@ -28,11 +27,9 @@ COPY dags/ ./dags/
 ENV PYTHONPATH=/app
 ENV AIRFLOW_HOME=/airflow
 
-# Initialize Airlfow (for production, use entrypoint)
-RUN airlofw df init
+# Initialize Airflow (for production, use entrypoint)
+RUN airflow db init
 
+EXPOSE 8000
 
-
-EXPOSE 8000 8000
-
-CMD ['uvicorn', 'api.main:app', ''--host', '0.0.0.0', '8000']
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

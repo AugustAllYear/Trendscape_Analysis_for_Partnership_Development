@@ -1,9 +1,10 @@
 import os 
 
 # base directories (can be overwritten by environment variables)
-DATA_PATH = os.get('DATA_PATH', './data')
-MODEL_PATH = os.get('MODEL_PATH', './models')
-OUTPUT_PATH = os.get('OUTPUT_PATH', './OUTPUT_PATH')
+
+DATA_PATH = os.getenv('DATA_PATH', './data')
+MODEL_PATH = os.getenv('MODEL_PATH', './models')
+OUTPUT_PATH = os.getenv('OUTPUT_PATH', './data/output')
 API_DATA_PATH = os.getenv('API_DATA_PATH', './api/data')
 
 # derived subdirectories

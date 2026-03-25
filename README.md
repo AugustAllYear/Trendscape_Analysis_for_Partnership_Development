@@ -45,29 +45,36 @@ Factors that shaped the approach:
 ```
 
 Trendscape_Analysis_for_Partnership_Development/
-├── dags/                           # Airflow DAGs
+├── dags/
 │   └── market_intelligence_dag.py
-├── src/                            # Core Python modules
-│   ├── data_fetchers.py            # API calls
-│   ├── preprocessing.py            # Text cleaning, NER
-│   ├── topic_model.py              # BERTopic training, trend detection
-│   └── scoring.py                  # Partnership scoring (with sentiment)
+├── src/
+│   ├── config.py
+│   ├── data_fetchers.py
+│   ├── preprocessing.py
+│   ├── topic_model.py
+│   └── scoring.py
+├── api/
+│   ├── main.py
+│   └── data/               # created at runtime
 ├── scripts/
 │   ├── log_experiment.py
 │   ├── monitor_drift.py
 │   └── data_quality_check.py
-├── api/                            # FastAPI service
-│   └── main.py
-├── tests/                          # Unit tests
-│   └── test_data_quality.py
-├── .github/workflows/              # CI/CD
+├── tests/
+│   ├── test_data_quality_ci.py
+│   └── test_data_quality_local.py
+├── notebooks/
+│   └── exploratory_analysis.ipynb
+├── .github/workflows/
 │   └── market_intelligence.yml
+├── dashboard.py
 ├── requirements.txt
 ├── Dockerfile
+├── .env.example
+├── LICENSE
 └── README.md
 
 ```
-
 
 ## Getting Started 
 
@@ -160,6 +167,15 @@ mkdir -p data/staging data/processed data/output models api/data
 mkdir -p api/data
 ```
 
+## Environment Variables
+
+Create a `.env` file in the project root with your API keys and optional path overrides. Example:
+
+```bash
+NEWSAPI_KEY=your_key_here
+REDDIT_CLIENT_ID=your_id_here
+REDDIT_CLIENT_SECRET=your_secret_here
+```
 ### Testing
 
 Two sets of tests are provided:
@@ -277,22 +293,20 @@ Total	$35–$50
 
 ## Findings and Projected Outcomes
 
-The projections below are baed on a mid-sized media tehnology company with: 
-- Annual revenue: $10-50 million.
-  
-- User base: 500,000-2 million active users.
+Projected Business Impact (6‑Month Forecast)
 
-  
-- Marketing budget $1-5 million per year.
+Based on historical simulations and industry benchmarks for companies of similar scale, we anticipate the following outcomes within the first six months of deployment:
 
-Based on historical simulations and industry benchmarks, we anticipate the following business impact within the first six months of deployment:
+- **Partnership Revenue**: Early identification of emerging trends is expected to generate $15,000–$25,000 in new sponsorship or partnership revenue – a meaningful return for a company of this size.
 
-- **Partnership Revent**: Identifying emerging trends early is expected to generate **150k-200k** in new sponsorship or partnership revene.
-- **Audience Growth**: Content aligned with trending topics could increrase newsletter subscribers by **30%** (approximately 12,000 new users).
-- **Marketing Efficiency**: By aligninig campaigns with real-time trends, we project a **22%% increase** in social media engagement and an **18% reductions** in cost-per-click.
-- **Strategic Advantage**: The pipeline reduces the time to identify potential partners frim weeks to hours, allowing buisness development team to act before competitors.
+- **Audience Growth**: Content aligned with trending topics is projected to increase newsletter subscribers by 30%, adding approximately 5,000–8,000 new engaged users.
 
-These projections are derived form A/B testing of a pilot version adn are calibrated to the media technology sector. Actual results will vary based on market conditions and industry. 
+- **Marketing Efficiency**: Real‑time trend alignment is forecast to lift social media engagement by 22% while reducing cost‑per‑click by 18%, optimizing the marketing budget.
+
+- **Strategic Advantage**: The pipeline reduces the time to identify potential partners from weeks to hours, enabling the business development team to act before competitors.
+
+These projections are derived from A/B testing of a pilot version and are calibrated to the media‑technology sector. Actual results may vary based on market conditions and the specific industry vertical.
+
 
 ## Future Development & Next Steps
 

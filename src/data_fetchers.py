@@ -1,18 +1,20 @@
 """
 functions to fetch data from external APIs
 """
-
 import pandas as pd
 import requests
 import logging
 from datetime import datetime, timedelta
+import praw  # moved to top
 
 logger = logging.getLogger(__name__)
 
-def fetch_news_api(api_key: str, days_back: int=1) -> pd.DataFrame:
-    """ fetch news article from NewsAPI.org for the last 'days_back' days."""
+def fetch_news_api(api_key: str, days_back: int = 1) -> pd.DataFrame:
+    """ 
+    fetch news article from NewsAPI.org for the last 'days_back' days.
+    """
     from_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
-    url = "http://newsapi.org/v2/everything"
+    url = "https://newsapi.org/v2/everything"  # fixed to https
     params = {
         'q': 'technology OR business OR startup',
         'from': from_date,
@@ -40,14 +42,12 @@ def fetch_news_api(api_key: str, days_back: int=1) -> pd.DataFrame:
     df = pd.DataFrame(data)
     logger.info(f"Fetched {len(df)} news articles")
     return df
-    
 
 def fetch_reddit_posts(client_id: str, client_secret: str,
                        subreddits: list, limit: int = 50) -> pd.DataFrame:
     """
     Fetch top posts from given subreddits using Reddit API (PRAW).
     """
-    import praw
     reddit = praw.Reddit(
         client_id=client_id,
         client_secret=client_secret,
@@ -69,14 +69,3 @@ def fetch_reddit_posts(client_id: str, client_secret: str,
     df = pd.DataFrame(posts)
     logger.info(f"Fetched {len(df)} Reddit posts")
     return df
-
-
-
-
-
-
-
-
-
-
-    

@@ -1,7 +1,7 @@
-#!/usr/bin/env/ python
+#!/usr/bin/env python
 """
 Log topic model metrics to MLflow.
-Run this after trianing the model (e.g, in CI/CD).
+Run this after training the model (e.g., in CI/CD).
 """
 
 import mlflow
@@ -16,53 +16,48 @@ from bertopic import BERTopic
 from gensim.corpora import Dictionary
 from gensim.models.coherencemodel import CoherenceModel
 from datetime import datetime
-from sklearn.feature_extraction.text import CountVectorizer
 
-loggin.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def compute_coherence(topic_model, texts):
     """
     Compute c_v coherence for the topic model.
     """
-    # get topic words
     topics = topic_model.get_topics()
-    # exclude outlier topic -1
+    # Exclude outlier topic -1
     topic_words = [words for tid, words in topics.items() if tid != -1]
     if not topic_words:
         return 0.0
 
-    # prepare for gensim coherence
     tokenized_texts = [text.split() for text in texts]
-
-    dictionary = dictionary(tokenized_texts)
-    # filter extremes to keep vocbulary manageable
+    dictionary = Dictionary(tokenized_texts)
+    # Filter extremes to keep vocabulary manageable
     dictionary.filter_extremes(no_below=2, no_above=0.9)
 
-    # compute coherence
-    cm = CohenrenceModel(topics=topic_words,
-                         texts=tokenized_texts,
-                         dictionary=dictionary,
-                         coherence='c_v')
+    cm = CoherenceModel(topics=topic_words,
+                        texts=tokenized_texts,
+                        dictionary=dictionary,
+                        coherence='c_v')
     coherence = cm.get_coherence()
     return coherence
 
 def main():
-    # envirmonment variables for paths
+    # Paths from environment or defaults
     data_path = os.getenv('DATA_PATH', './data')
     processed_path = os.path.join(data_path, 'processed')
     model_path = os.getenv('MODEL_PATH', './models/latest_topic_model.pkl')
     api_data_path = os.getenv('API_DATA_PATH', './api/data')
     os.makedirs(api_data_path, exist_ok=True)
 
-    # load model
+    # Load model
     try:
         topic_model = joblib.load(model_path)
     except FileNotFoundError:
         logger.error("Model not found at %s", model_path)
         return
 
-    # load the most recent processed data
+    # Load the most recent processed data
     files = sorted(glob.glob(f"{processed_path}/clean_*.parquet"))
     if not files:
         logger.error("No clean data files found in %s", processed_path)
@@ -71,39 +66,36 @@ def main():
     df = pd.read_parquet(latest_file)
     texts = df['clean_text'].tolist()
 
-    # transfomr
+    # Transform
     topics, probs = topic_model.transform(texts)
 
-    # metric
+    # Metrics
     n_topics = len(set(topics)) - (1 if -1 in topics else 0)
     outlier_ratio = np.mean(np.array(topics) == -1)
-    avg_prob = np.mean(np.max(probs, axis = 1))
+    avg_prob = np.mean(np.max(probs, axis=1))
+    coherence = compute_coherence(topic_model, texts)
 
-    # coherence (requires texsts)
-    coherence = compute_coherence(topoic_model, texts)
-
-    # log to MLflow
+    # Log to MLflow
     with mlflow.start_run(run_name="market_intelligence_eval"):
         mlflow.log_metric("n_topics", n_topics)
-        mlflow.log_metric("outlier_ratio", Outlier_ratio)
+        mlflow.log_metric("outlier_ratio", outlier_ratio)
         mlflow.log_metric("avg_topic_probability", avg_prob)
         mlflow.log_metric("coherence_c_v", coherence)
-        mlflow.sklearn.log_model('topic_model", topic_model)
+        mlflow.sklearn.log_model(topic_model, "topic_model")
 
-    # also save metrics to JSON for API
-    metrics= {
+    # Save metrics JSON for API
+    metrics = {
         "n_topics": n_topics,
-        "outlier_ratio": ourlier_ratio,
+        "outlier_ratio": outlier_ratio,
         "avg_topic_probability": avg_prob,
         "coherence_c_v": coherence,
         "timestamp": pd.Timestamp.now().isoformat()
     }
-    metrics_file = os.path.join(api_data_path, "metircs.json")
+    metrics_file = os.path.join(api_data_path, "metrics.json")
     with open(metrics_file, 'w') as f:
-        import json
         json.dump(metrics, f)
 
-    loggger.info("Logged evaluation metrics to MLflow and saved to %s", metrics_file)
+    logger.info("Logged evaluation metrics to MLflow and saved to %s", metrics_file)
 
-if __name == "__main__":
+if __name__ == "__main__":
     main()
