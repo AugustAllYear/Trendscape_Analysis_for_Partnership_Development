@@ -280,55 +280,6 @@ If you see errors about missing directories, create them manually:
 
 Or set the environment cariables DATA_Path, MODEL_PATH to point to existing locations.
 
-### Cost Estimation (Monthly)
-
-These estimates are realistic for a small-scale production deployment on a single t#.medium instance (or equivalent) with 50 GB of storage. The copute cost may vary by region and provider, but it's a reasonable ballpark. The GitHub Actions free tier is sufficient for this pipeline (2000 minutes/month).
-
-Resource	Estimated Cost
-Compute (t3.medium)	$30
-Storage (50 GB)	$5
-API Fees (free tiers)	$0
-GitHub Actions (free)	$0
-Total	$35–$50
-
-## Findings and Projected Outcomes
-
-Projected Business Impact (6‑Month Forecast)
-
-Based on historical simulations and industry benchmarks for companies of similar scale, we anticipate the following outcomes within the first six months of deployment:
-
-- **Partnership Revenue**: Early identification of emerging trends is expected to generate $15,000–$25,000 in new sponsorship or partnership revenue – a meaningful return for a company of this size.
-
-- **Audience Growth**: Content aligned with trending topics is projected to increase newsletter subscribers by 30%, adding approximately 5,000–8,000 new engaged users.
-
-- **Marketing Efficiency**: Real‑time trend alignment is forecast to lift social media engagement by 22% while reducing cost‑per‑click by 18%, optimizing the marketing budget.
-
-- **Strategic Advantage**: The pipeline reduces the time to identify potential partners from weeks to hours, enabling the business development team to act before competitors.
-
-These projections are derived from A/B testing of a pilot version and are calibrated to the media‑technology sector. Actual results may vary based on market conditions and the specific industry vertical.
-
-
-## Future Development & Next Steps
-
-- **Real-time streaming** - Intergrate with a message queue (e.g., Kafka) to process incoming articles as they are published.
-- **Improve sentiment analysis** - Fine-tune a transformer model on company-cpecific datya for more accurate sentiment scoring.
-- **Cloud Deployment** - Containerize the pipeline and deploy on AWS/GCP with managed Airflow (e.g., MWAA, Cloud Composer).
-- **Feedback loop** - Allow business users to mark recommendations as successful; use that to retrain the scoring model via logistic regression.
-- **Interactive dashboard**- Enhance the streamlit dashboard with historical trend graphs and drill-down capabilities.
-- **Model monitoring** - Set up automated alerts when topic coherence drops or when the model's performance degrades.
-
-## Other Use Case Examples
-
-The core pipeline (daily data ingestion -> entity extraction -> scoring) is highly adaptable. Other use cases for a similair modeling approach:
-
-- Competitive Intelligence - Monitor news about copetitors, track their product launches, funding, partnerships scores, outpput competitor threat levels.
-- Brand Monitoring - Track mentions of your own brand across news and social media, measue sentiment, and identicy influencers who mention you.
-- Crisis Detection - Look for sudden spikes in negative sentiment or specific keywords (e.g., "recall", "lawsuits") to alret PR teams.
-- Trend-Driven Content Creation - Use trending topics to suggest blog post ideas, video topics, or ad copy for marketing teams.
-- Investment Research - For a VC firm track emergin startups in specific sectors and score them based on media buzz and funding news.
-
-With slight adjusments to scoring logic and the output format (e.g., a dashboard, alerts, or a weekly report.)
-
 ## License
 See LICENSE
 

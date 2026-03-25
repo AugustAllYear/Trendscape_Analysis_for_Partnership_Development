@@ -81,8 +81,8 @@ target/
 profile_default/
 ipython_config.py
 
-# pyenv
-.python-version
+# pyenv (the .python-version file is kept – do NOT ignore it)
+# .python-version   # <-- keep this line commented out; we want the file tracked
 
 # pipenv
 Pipfile.lock
@@ -111,7 +111,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-vevn/   # typo in README, but keep
+vevn/
 
 # Spyder project settings
 .spyderproject
@@ -162,6 +162,3 @@ mlruns/
 .vscode/
 .idea/
 *.sublime-*
-
-# Project-specific
-design.md   # if you want to exclude design.md? No, keep it.
