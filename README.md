@@ -160,6 +160,18 @@ mkdir -p data/staging data/processed data/output models api/data
 mkdir -p api/data
 ```
 
+### Testing
+
+Two sets of tests are provided:
+
+- **CI (GitHub Actions)** - 'test.test_data_quality_ci.py' uses synthetic data and runs without external files.
+- **Local** - 'test.test_data_quality_local.py' reads actual data from 'STAGING_PATH'. It will skip if no data is found. To run it, ensure you have at least one Paquet file in './data/staging'.
+
+Run all tests with:
+```bash
+pytest test/
+```
+
 ### Running Locally 
 
 Note: 
