@@ -244,6 +244,22 @@ the GitHub Actions workflow (.github/workflows/market_intelligence.yml) runs:
 - Trains the topic model on recent data.
 - Logs metrics to MLflow.
 - (Optional) Deploys the API is test pass.
+  
+## SQL Data Processing & Optimization
+
+To demonstrate SQL processses for optinization, a lightweight **SQLite** database that stores article metadata. 
+
+- **Window functions** – `ROW_NUMBER()` to deduplicate articles by URL.
+- **Time‑based aggregations** – `strftime('%Y-%m', published_at)` to group by month.
+- **Indexing** – creating indexes on `published_at`, `source`, and `url` to speed up queries.
+- **Join operations** – linking articles with a `companies` table to count mentions.
+
+### Running the SQL examples
+
+After data is ingested (via Airflow or manually), run:
+
+```bash
+python scripts/run_sql_practice.py
 
 ### Testing 
 
