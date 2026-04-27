@@ -1,11 +1,13 @@
 """
-functions to fetch data from external APIs
+functions to fetch data from external APIs and create tables
 """
 import pandas as pd
-import requests
 import logging
+import os
+import praw 
+import requests
+import sqlite3
 from datetime import datetime, timedelta
-import praw  # moved to top
 
 logger = logging.getLogger(__name__)
 
@@ -69,3 +71,45 @@ def fetch_reddit_posts(client_id: str, client_secret: str,
     df = pd.DataFrame(posts)
     logger.info(f"Fetched {len(df)} Reddit posts")
     return df
+
+
+DB_PATH = os.getenv("TRENDSCAPE_DB", "data/trendscape.db")
+
+def create_tables(conn):
+    """Create tables for articles, companies, and the junction table."""
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS articles (
+            article_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT UNIQUE,
+            title TEXT,
+            content TEXT,
+            source TEXT,
+            published_at TIMESTAMP
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS companies (
+            company_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            company_name TEXT UNIQUE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS article_companies (
+            article_id INTEGER,
+            company_id INTEGER,
+            FOREIGN KEY(article_id) REFERENCES articles(article_id),
+            FOREIGN KEY(company_id) REFERENCES companies(company_id)
+        )
+    """)
+    conn.commit()
+
+def insert_articles(conn, df):
+    """Insert or ignore articles into SQLite."""
+    # Use a temporary in‑memory table to avoid duplicates
+    df.to_sql("temp_articles", conn, if_exists="replace", index=False)
+    conn.execute("""
+        INSERT OR IGNORE INTO articles (url, title, content, source, published_at)
+        SELECT url, title, content, source, published_at FROM temp_articles
+    """)
+    conn.execute("DROP TABLE temp_articles")
+    conn.commit()
