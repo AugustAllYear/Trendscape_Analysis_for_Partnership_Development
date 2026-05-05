@@ -1,4 +1,4 @@
-"""Run SQL queries to practice query optimization."""
+"""Run SQL queries to test query optimization adn measure performance."""
 
 import sqlite3
 import time
