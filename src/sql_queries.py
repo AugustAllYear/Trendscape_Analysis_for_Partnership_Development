@@ -75,4 +75,26 @@ CREATE_INDEXES = [
 def create_indexes(conn):
     for idx_sql in CREATE_INDEXES:
         conn.execute(idx_sql)
-    conn.commit()
+    conn.commit
+
+def create_unified_schema(conn):
+    """Create unified schema for all data sources"""
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS articles (
+            article_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT UNIQUE,
+            title TEXT,
+            content TEXT,
+            source TEXT,
+            published_at TIMESTAMP,
+            data_source TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_articles_published ON articles(published_at)
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_articles_source ON articles(source)
+    """)
+
