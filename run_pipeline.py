@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Full Trendscape pipeline – no Airflow required.
+Full Trendscape pipeline with multiple data sources.
 Runs: fetch → preprocess → store to SQLite → topic model → score → export.
 """
 
@@ -16,10 +16,11 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 # Import project modules
-from data_fetchers import fetch_news_api, fetch_reddit_posts
+from advanced_data_fetchers import DataFetcher
 from preprocessing import clean_text, extract_entities
 from topic_model import update_topic_model, find_hottest_topic
 from scoring import score_companies
+from sql_optimization import benchmark_query_performance
 from config import STAGING_PATH, PROCESSED_PATH, MODELS_DIR, OUTPUT_DIR, API_DATA_DIR
 
 # Create directories
@@ -29,44 +30,45 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(API_DATA_DIR, exist_ok=True)
 
-def fetch_data():
-    """Fetch news and Reddit data; fallback to synthetic if keys missing."""
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-        api_key = os.getenv("NEWSAPI_KEY")
-        reddit_id = os.getenv("REDDIT_CLIENT_ID")
-        reddit_secret = os.getenv("REDDIT_CLIENT_SECRET")
-        if api_key and reddit_id and reddit_secret:
-            print("Fetching real data...")
-            news = fetch_news_api(api_key, days_back=1)
-            reddit = fetch_reddit_posts(reddit_id, reddit_secret,
-                                        subreddits=['technology','startups','business'])
-            df = pd.concat([news, reddit], ignore_index=True)
-            print(f"Fetched {len(df)} real articles.")
-            return df
+def fetch_all_data():
+    """Fetch data from all sources"""
+    fetcher = DataFetcher()
+    
+    sources = {
+        'Hacker News': fetcher.fetch_hacker_news,
+        'Reddit RSS': fetcher.fetch_reddit_rss,
+        'NewsAPI': lambda: fetcher.fetch_newsapi(query="technology OR business"),
+        'SauravKanchan API': lambda: fetcher.fetch_sauravkanchan_news(query="technology"),
+        'Lemmy': lambda: fetcher.fetch_lemmy_posts(community="technology")
+    }
+    
+    all_dfs = []
+    for name, fetch_func in sources.items():
+        print(f"Fetching {name}...")
+        df = fetch_func()
+        if not df.empty:
+            all_dfs.append(df)
+            print(f"  - Fetched {len(df)} articles from {name}")
         else:
-            raise ValueError("Missing API keys")
-    except Exception as e:
-        print(f"Real data failed ({e}). Falling back to synthetic data.")
+            print(f"  - No data from {name}")
+    
+    if not all_dfs:
+        print("No data fetched, falling back to synthetic data")
         return generate_synthetic_data(500)
+    
+    return pd.concat(all_dfs, ignore_index=True)
 
 def generate_synthetic_data(n=500):
-    """Synthetic data generator (same as populate_db.py)."""
+    """Synthetic data generator (fallback)"""
     np.random.seed(42)
     titles = [
         "AI startup raises $50M for generative video",
         "Blockchain technology gains traction in supply chain",
         "New sustainability platform launched by EcoCorp",
         "TechGlobal announces quantum computing breakthrough",
-        "HealthPlus acquires wellness app for $200M",
-        "WorkAnywhere expands remote work tools",
-        "GreenEnergy partners with major utility provider",
-        "CloudNine reports 40% revenue growth",
-        "AI Solutions introduces ethical AI framework",
-        "WellnessInc launches mental health platform"
+        "HealthPlus acquires wellness app for $200M"
     ]
-    sources = ["NewsAPI", "Reddit"]
+    sources = ["NewsAPI", "Reddit", "Hacker News", "SauravKanchan API", "Lemmy"]
     dates = [datetime.now() - timedelta(days=np.random.randint(0, 90)) for _ in range(n)]
     data = []
     for i in range(n):
@@ -82,23 +84,26 @@ def generate_synthetic_data(n=500):
     return pd.DataFrame(data)
 
 def preprocess_data(df):
-    """Apply text cleaning and entity extraction."""
+    """Apply text cleaning and entity extraction"""
     print("Preprocessing text...")
     df['clean_text'] = (df['title'].fillna('') + ' ' + df['content'].fillna('')).apply(clean_text)
     df['entities'] = df['clean_text'].apply(extract_entities)
     return df
 
 def store_to_sqlite(df, db_path="data/trendscape.db"):
-    """Store articles into SQLite (same schema as DAG)."""
+    """Store articles into SQLite (unified schema)"""
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     conn = sqlite3.connect(db_path)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS articles (
-            url TEXT PRIMARY KEY,
+            article_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT UNIQUE,
             title TEXT,
             content TEXT,
             source TEXT,
-            published_at TIMESTAMP
+            published_at TIMESTAMP,
+            data_source TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     df[['url', 'title', 'content', 'source', 'published_at']].to_sql(
@@ -110,15 +115,16 @@ def store_to_sqlite(df, db_path="data/trendscape.db"):
     """)
     conn.execute("DROP TABLE temp_articles")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_articles_published ON articles(published_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_articles_source ON articles(source)")
     conn.commit()
     conn.close()
     print(f"Stored {len(df)} rows into {db_path}")
 
 def main():
-    print("=== Trendscape Full Pipeline (No Airflow) ===\n")
+    print("=== Trendscape Full Pipeline (Multi-Source Version) ===\n")
 
-    # 1. Fetch data
-    df = fetch_data()
+    # 1. Fetch data from all sources
+    df = fetch_all_data()
 
     # 2. Preprocess
     df = preprocess_data(df)
@@ -126,9 +132,14 @@ def main():
     # 3. Store to SQLite (for SQL practice)
     store_to_sqlite(df)
 
-    # 4. Train/update topic model
-    print("Training BERTopic model on recent data...")
-    # We need to save the processed data to a Parquet file (required by update_topic_model)
+    # 4. Run SQL performance benchmarks
+    print("\n=== SQL Performance Benchmarks ===")
+    benchmarks = benchmark_query_performance()
+    for name, stats in benchmarks.items():
+        print(f"{name}: {stats['rows']} rows, {stats['time']:.3f}s")
+
+    # 5. Train/update topic model
+    print("\nTraining BERTopic model on recent data...")
     processed_file = os.path.join(PROCESSED_PATH, "clean_manual.parquet")
     df.to_parquet(processed_file)
     model = update_topic_model(data_path=PROCESSED_PATH, window_days=90)
@@ -136,7 +147,7 @@ def main():
     joblib.dump(model, model_path)
     print(f"Model saved to {model_path}")
 
-    # 5. Score companies
+    # 6. Score companies
     print("Scoring companies for hottest topic...")
     hot_topic = find_hottest_topic(model, df, lookback_days=30)
     if hot_topic == -1:
