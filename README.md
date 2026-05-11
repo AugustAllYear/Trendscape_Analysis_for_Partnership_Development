@@ -38,7 +38,7 @@ Factors that shaped the approach:
 | Database           | PostgreSQL (metadata), Parquet files|
 | CI/CD              | GitHub Actions, Docker              |
 
-**For detailed architecture,, evaluation metrics, and rationale, see the [Design Document](design.md).** 
+**For detailed architecture, evaluation metrics, and rationale, see the [Design Document](design.md).** 
 
 ### File Structure
 
@@ -74,6 +74,32 @@ Trendscape_Analysis_for_Partnership_Development/
 ├── LICENSE
 └── README.md
 
+```
+
+## Data Sources
+
+The pipeline now aggregates data from five distinct sources:
+
+| Source | Data Type | API Key Required | Best For |
+|--------|-----------|------------------|----------|
+| [Hacker News API](https://news.ycombinator.com/) | Tech stories | No | Technology trends, startup discussions |
+| [NewsAPI.org](https://newsapi.org/) | World news | Yes (free tier) | General business news |
+| [Reddit RSS Feeds](https://www.reddit.com/.rss) | Community posts | No | Product feedback, community sentiment |
+| [Lemmy API](https://lemmy.dbzer0.com) | Decentralized content | No | Alternative tech discussions |
+| [SauravKanchan/NewsAPI](https://github.com/SauravKanchan/NewsAPI) | Open source news | No | Breaking technology news |
+
+## SQL Performance Optimization
+
+The database includes several optimization techniques:
+
+- **Window Functions**: Use `ROW_NUMBER()` for deduplication
+- **Indexing**: Indexes on `published_at` and `source` columns
+- **Query Optimization**: Benchmarked queries for performance comparison
+
+Run the benchmark to see the performance impact:
+
+```bash
+python run_pipeline.py
 ```
 
 ## Getting Started 
@@ -244,22 +270,6 @@ the GitHub Actions workflow (.github/workflows/market_intelligence.yml) runs:
 - Trains the topic model on recent data.
 - Logs metrics to MLflow.
 - (Optional) Deploys the API is test pass.
-  
-## SQL Data Processing & Optimization
-
-To demonstrate SQL processses for optinization, a lightweight **SQLite** database that stores article metadata. 
-
-- **Window functions** – `ROW_NUMBER()` to deduplicate articles by URL.
-- **Time‑based aggregations** – `strftime('%Y-%m', published_at)` to group by month.
-- **Indexing** – creating indexes on `published_at`, `source`, and `url` to speed up queries.
-- **Join operations** – linking articles with a `companies` table to count mentions.
-
-### Running the SQL examples
-
-After data is ingested (via Airflow or manually), run:
-
-```bash
-python scripts/run_sql_practice.py
 
 ### Testing 
 
