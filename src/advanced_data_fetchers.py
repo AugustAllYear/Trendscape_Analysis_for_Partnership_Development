@@ -1,10 +1,10 @@
+import os
+import logging
 import requests
 import feedparser
 import pandas as pd
 from datetime import datetime, timedelta
-import logging
 from pythorhead import Lemmy
-from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
