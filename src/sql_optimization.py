@@ -1,8 +1,11 @@
 import time
 import sqlite3
 import pandas as pd
+from src.db_setup import get_db_path
 
-def benchmark_query_performance(db_path='data/trendscape.db'):
+def benchmark_query_performance(db_path=None):
+    if db_path is None:
+        db_path = get_db_path()
     conn = sqlite3.connect(db_path)
     queries = {
         'Window Functions Dedup': '''
@@ -40,3 +43,8 @@ def benchmark_query_performance(db_path='data/trendscape.db'):
         results[name] = {'rows': len(df), 'time': elapsed}
     conn.close()
     return results
+
+if __name__ == "__main__":
+    import json
+    res = benchmark_query_performance()
+    print(json.dumps(res, indent=2))
