@@ -102,6 +102,28 @@ Run the benchmark to see the performance impact:
 python run_pipeline.py
 ```
 
+## Airflow DAG & SQL Optimization
+
+The DAG `market_intelligence_pipeline` runs daily at 2 AM UTC. It performs:
+
+1. Fetch articles from **5 sources** (Hacker News, Reddit RSS, NewsAPI, SauravKanchan, Lemmy).
+2. Clean text and extract entities.
+3. Store data into SQLite (`data/trendscape.db`) with a unified schema.
+4. Train/update the BERTopic model.
+5. Generate partnership recommendations.
+6. Run **SQL performance benchmarks** (window function dedup, time‑range queries, aggregations).
+
+### Running the DAG
+
+```bash
+export AIRFLOW_HOME=$(pwd)/airflow
+export AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="sqlite:///$AIRFLOW_HOME/airflow.db"
+airflow db init
+airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin
+airflow webserver --port 8080
+airflow scheduler
+```
 ## Getting Started 
 
 ### Prerequisites
@@ -170,6 +192,54 @@ python run_pipeline.py
    --email admin@example.com \
    --password admin
 ```
+
+### SQL Benchmark Output
+
+After the DAG runs successfully, the final task `sql_benchmark` prints performance metrics for key SQL queries. These numbers demonstrate the impact of indexing and window functions. Example output:
+
+```json
+{
+  "Window Functions Dedup": {"rows": 1250, "time": 0.023},
+  "Time Range Query": {"rows": 340, "time": 0.008},
+  "Source Aggregation": {"rows": 5, "time": 0.004},
+  "Complex Join": {"rows": 100, "time": 0.012}
+}
+```
+- Window Functions Dedup – Uses ROW_NUMBER() to keep only the latest article per URL.
+
+- Time Range Query – Counts articles published in the last 7 days, grouped by source.
+
+- Source Aggregation – Shows how indexes on source speed up grouping and length calculations.
+
+- Complex Join – Simulates a join (here a self‑join) with time filtering.
+
+To run the benchmark manually:
+```python src/sql_optimization.py```
+
+### Troubleshooting Airflow with SQLite
+Airflow can run with SQLite for development, but two common issues arise:
+
+1. `encoding parameter error`
+The default SQLite connection string includes `?check_same_thread=False&encoding=utf8`. Newer SQLAlchemy versions reject the encoding argument.
+Fix: Use a clean connection string without parameters:
+```export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="sqlite:////absolute/path/to/airflow/airflow.db"
+```
+(Note the four slashes after sqlite: for an absolute path.)
+
+2. SQLite concurrency – Airflow’s default `LocalExecutor` tries to use multiple connections, which SQLite doesn’t support.
+Fix: Force the `SequentialExecutor`:
+```bash
+    export AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+```
+
+Recommended full setup (before any Airflow command):
+```bash
+export AIRFLOW_HOME=$(pwd)/airflow
+export AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="sqlite:////$AIRFLOW_HOME/airflow.db"
+```
+
+After these exports, run `airflow db init`, create a user, and start webserver + scheduler.
 
 ### Configuration
 
